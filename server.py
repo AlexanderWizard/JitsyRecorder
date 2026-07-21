@@ -24,7 +24,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
 from recorder import OUTPUT_DIR, RecorderSession
-from version import VERSION
+from version import AUTHOR, VERSION
 
 app = FastAPI(title="Jitsi Recorder", version=VERSION)
 TOKEN = os.environ.get("RECORDER_TOKEN")
@@ -102,7 +102,7 @@ def _run_transcription(mp3_name: str) -> None:
 
 @app.get("/version")
 def version():
-    return {"version": VERSION, "name": "Jitsi Recorder"}
+    return {"version": VERSION, "name": "Jitsi Recorder", "author": AUTHOR}
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -110,6 +110,7 @@ def index():
     # Token is entered in the browser and only sent from here — never baked in.
     html = INDEX_HTML.replace("__TOKEN_REQUIRED__", "true" if TOKEN else "false")
     html = html.replace("__VERSION__", VERSION)
+    html = html.replace("__AUTHOR__", AUTHOR)
     return HTMLResponse(html)
 
 
@@ -317,6 +318,7 @@ INDEX_HTML = r"""<!doctype html>
               background:linear-gradient(90deg,#22c55e 0%,#eab308 70%,#ef4444 100%);
               transition:width .12s linear}
   .hide{display:none}
+  .footer{text-align:center;color:var(--mut);font-size:12px;margin-top:18px}
 </style></head>
 <body><div class="wrap">
   <h1>🎙️ Jitsi Recorder <span class="ver">v__VERSION__</span></h1>
@@ -344,6 +346,8 @@ INDEX_HTML = r"""<!doctype html>
     <b style="font-size:14px">Записи</b>
     <div class="rec-list" id="recs"><div class="meta">пока пусто</div></div>
   </div>
+
+  <div class="footer">Jitsi Recorder v__VERSION__ · © __AUTHOR__</div>
 </div>
 <script>
 const NEED_TOKEN = __TOKEN_REQUIRED__;
@@ -479,7 +483,7 @@ if __name__ == "__main__":
         pass
 
     print("=" * 52)
-    print(f"  Jitsi Recorder v{VERSION} запущен")
+    print(f"  Jitsi Recorder v{VERSION}  by {AUTHOR}")
     print(f"  Панель:   http://{lan_ip}:{port}")
     print(f"  Локально: http://127.0.0.1:{port}")
     print("  Токен:   ", "задан (X-Token)" if TOKEN else "НЕ задан (открытый доступ!)")

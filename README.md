@@ -1,5 +1,7 @@
 # Jitsi Meet Recorder (Windows)
 
+Автор: **Alexander Wizard**
+
 Записывает аудио звонка Jitsi Meet в MP3. Приложение через headless Chromium
 (Playwright) заходит в комнату по ссылке как участник (микрофон/камера
 выключены), микширует удалённое аудио через Web Audio API + MediaRecorder и

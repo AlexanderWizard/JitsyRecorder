@@ -56,6 +56,15 @@ def _transcript_outputs(stem: str) -> list[str]:
     return sorted(p.name for p in TRANSCRIPT_DIR.glob(stem + ".*"))
 
 
+def _prune_jobs() -> None:
+    """Cap the finished-jobs dict so it can't grow without bound."""
+    with _jobs_lock:
+        finished = [k for k, v in _jobs.items() if v["state"] in ("done", "error")]
+        # keep the 50 most recent finished jobs (dict preserves insertion order)
+        for k in finished[:-50]:
+            _jobs.pop(k, None)
+
+
 def _run_transcription(mp3_name: str) -> None:
     mp3_path = OUTPUT_DIR / mp3_name
     stem = mp3_path.stem
@@ -222,6 +231,7 @@ def transcribe(req: TranscribeRequest):
             raise HTTPException(status_code=409, detail="Транскрибация уже идёт")
         _jobs[safe] = {"state": "queued", "error": None, "outputs": []}
     threading.Thread(target=_run_transcription, args=(safe,), daemon=True).start()
+    _prune_jobs()
     return {"ok": True}
 
 
@@ -475,4 +485,6 @@ if __name__ == "__main__":
     print("  Токен:   ", "задан (X-Token)" if TOKEN else "НЕ задан (открытый доступ!)")
     print("=" * 52)
 
-    uvicorn.run(app, host=host, port=port)
+    # access_log=False: the panel polls a few times per second, so per-request
+    # logging would flood the console endlessly. Errors/warnings still print.
+    uvicorn.run(app, host=host, port=port, access_log=False)

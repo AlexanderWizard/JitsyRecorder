@@ -14,6 +14,8 @@ dist/
 # App runtime output
 recordings/
 silence.wav
+config.json
+recorder.log
 
 # Editors / OS
 .vscode/

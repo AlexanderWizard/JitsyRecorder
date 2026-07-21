@@ -3,5 +3,5 @@
 Bump VERSION on every released change and add a line to CHANGELOG.md.
 """
 
-VERSION = "1.0.9"
+VERSION = "1.0.13"
 AUTHOR = "Alexander Wizard"

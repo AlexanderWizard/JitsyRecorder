@@ -23,22 +23,25 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 
+import config
 from recorder import OUTPUT_DIR, RecorderSession
 from version import AUTHOR, VERSION
 
 app = FastAPI(title="Jitsi Recorder", version=VERSION)
-TOKEN = os.environ.get("RECORDER_TOKEN")
+
+_CFG = config.load()
+TOKEN = _CFG["token"] or None
 
 TRANSCRIPT_DIR = OUTPUT_DIR / "transcripts"
 TRANSCRIPT_DIR.mkdir(exist_ok=True)
 
-# whisperx options (overridable via env, defaults match the user's command).
+# whisperx options — from config.json (env still overrides via config.load()).
 WHISPER = {
     "bin": os.environ.get("WHISPER_BIN", "whisperx"),
-    "model": os.environ.get("WHISPER_MODEL", "large-v3"),
-    "language": os.environ.get("WHISPER_LANGUAGE", "ru"),
-    "device": os.environ.get("WHISPER_DEVICE", "cuda"),
-    "compute_type": os.environ.get("WHISPER_COMPUTE", "float16"),
+    "model": _CFG["whisper_model"],
+    "language": _CFG["whisper_language"],
+    "device": _CFG["whisper_device"],
+    "compute_type": _CFG["whisper_compute"],
 }
 
 # Active + recent recording sessions, keyed by short id.
@@ -82,6 +85,7 @@ def _run_transcription(mp3_name: str) -> None:
     try:
         proc = subprocess.run(
             cmd, capture_output=True, text=True,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
         if proc.returncode != 0:
             tail = (proc.stderr or proc.stdout or "").strip().splitlines()[-8:]

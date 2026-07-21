@@ -31,10 +31,13 @@ Write-Host "Version -> $new" -ForegroundColor Cyan
 # PyInstaller logs to stderr; don't let that trip ErrorActionPreference=Stop.
 $py = Join-Path $PSScriptRoot '.venv\Scripts\python.exe'
 $ErrorActionPreference = 'Continue'
-& $py -m PyInstaller --noconfirm --clean --name JitsiRecorder --onefile --console `
+# --windowed: no console window, lives in the system tray (tray.py entry).
+& $py -m PyInstaller --noconfirm --clean --name JitsiRecorder --onefile --windowed `
     --add-data "capture.js;." `
     --collect-all playwright --collect-all uvicorn --collect-submodules fastapi `
-    server.py
+    --hidden-import pystray._win32 --hidden-import PIL.ImageDraw `
+    --hidden-import tkinter --hidden-import tkinter.ttk --hidden-import tkinter.messagebox `
+    tray.py
 $code = $LASTEXITCODE
 $ErrorActionPreference = 'Stop'
 if ($code -ne 0) { throw "Build failed (exit $code)" }

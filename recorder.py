@@ -31,6 +31,9 @@ else:
     BUNDLE_DIR = Path(__file__).resolve().parent
     BASE_DIR = BUNDLE_DIR
 
+# Hide child-process console windows (matters in --windowed/tray builds).
+CREATE_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
 CAPTURE_JS = (BUNDLE_DIR / "capture.js").read_text(encoding="utf-8")
 OUTPUT_DIR = BASE_DIR / "recordings"
 OUTPUT_DIR.mkdir(exist_ok=True)
@@ -69,6 +72,7 @@ def _ensure_silence() -> None:
         ["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=48000:cl=mono",
          "-t", "1", str(SILENT_WAV)],
         check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        creationflags=CREATE_NO_WINDOW,
     )
 
 
@@ -179,6 +183,7 @@ class RecorderSession:
                 "about:blank",
             ],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            creationflags=CREATE_NO_WINDOW,
         )
 
         cdp_url = await self._wait_for_cdp(port, proc)
@@ -307,6 +312,7 @@ class RecorderSession:
              "-vn", "-codec:a", "libmp3lame", "-b:a", "128k",
              str(self.mp3_path)],
             check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            creationflags=CREATE_NO_WINDOW,
         )
         try:
             os.remove(self.webm_path)
